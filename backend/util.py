@@ -1,11 +1,17 @@
 import requests
+from openai import OpenAI
+import os
+
+
+#get api keys from env file
+google_api_key = os.environ.get("GOOGLE_API_KEY")
+openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 
 #get nearby restaurants
-def get_nearby_restaurants(api_key, location, radius=200, keyword='restaurant', num_results=5):
+def get_nearby_restaurants(location, radius=200, keyword='restaurant', num_results=5):
     '''
     Returns the restaurants from the API call based on location, radius
-    
     '''
     base_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
     
@@ -13,7 +19,7 @@ def get_nearby_restaurants(api_key, location, radius=200, keyword='restaurant', 
         'location': location,
         'radius': radius,
         'keyword': keyword,
-        'key': api_key
+        'key': google_api_key
     }
     
     response = requests.get(base_url, params=params)
@@ -24,7 +30,8 @@ def get_nearby_restaurants(api_key, location, radius=200, keyword='restaurant', 
     
     return results
 
-def get_place_details(api_key, place_id):
+
+def get_place_details(place_id):
     '''
     Returns details on a place defined by the place_id, e.g. reviews
     '''
@@ -32,7 +39,7 @@ def get_place_details(api_key, place_id):
 
     params = {
         'place_id': place_id,
-        'key': api_key
+        'key': google_api_key
     }
 
     response = requests.get(base_url, params=params)
@@ -40,26 +47,26 @@ def get_place_details(api_key, place_id):
 
     return result
 
-def generate_summary(reviews):
-    """
-    Calls the OpenAI API to generate a summary of reviews. reviews is passes as a list
 
-    """
-
+def generate_summary(client, reviews):
     #Concatenate all reviews
     review_text = "\n".join(review.get('text', '') for review in reviews)
 
     #Define the prompt for GPT
-    prompt = f"Summarize the reviews for this place:\n{review_text}"
+    prompt = f"Summarize the reviews for this place, please do not use more than 2-3 sentences: \n{review_text}"
 
-    #Generate short summary
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokes=100
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "user", "content": prompt},
+        ]
     )
+    
 
     #Extract the generated summary from GPT's response
-    summary = response['choices'][0]['text'].strip()
+    summary = response.choices[0].message.content
+
+    print("Summary: ", summary)
 
     return summary
+    
