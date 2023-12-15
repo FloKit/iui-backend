@@ -9,20 +9,31 @@ openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 
 #get nearby restaurants
-def get_nearby_restaurants(location, radius=200, keyword='restaurant', num_results=5):
+def get_nearby_restaurants(location,tag, radius=200, keyword='restaurant', num_results=5):
     '''
     Returns the restaurants from the API call based on location, radius
+    @
     '''
-    base_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+    base_url = 'https://maps.googleapis.com/maps/api/place/'
     
-    params = {
-        'location': location,
-        'radius': radius,
-        'keyword': keyword,
-        'key': google_api_key
-    }
-    
-    response = requests.get(base_url, params=params)
+    # search for restaurants without specify the kind of restaurants
+    if not tag :
+        params = {
+            'location': location,
+            'radius': radius,
+            'keyword': keyword,
+            'key': google_api_key
+        }
+        response = requests.get(base_url+'nearbysearch/json', params=params)
+    else:
+        params = {
+            'location': location,
+            'radius': radius,
+            'query': tag,
+            'key': google_api_key
+        } 
+        response = requests.get(base_url+'textsearch/json', params=params)
+
     results = response.json().get('results', [])
 
     # Limit the number of results to the top 'num_results'
