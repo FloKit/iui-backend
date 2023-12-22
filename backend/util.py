@@ -1,11 +1,21 @@
 import requests
 from openai import OpenAI
 import os
+import sqlite3
 
 
 #get api keys from env file
 google_api_key = os.environ.get("GOOGLE_API_KEY")
 openai_api_key = os.environ.get("OPENAI_API_KEY")
+
+conn = sqlite3.connect('reviews.db', check_same_thread=False)
+cursor = conn.cursor()
+
+cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
+    id TEXT PRIMARY KEY,
+    review_summary TEXT,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP
+)''')
 
 
 #get nearby restaurants
@@ -38,7 +48,7 @@ def get_nearby_restaurants(location,tag, radius=200, keyword='restaurant', num_r
 
     # Limit the number of results to the top 'num_results'
     results = results[:num_results]
-    
+
     return results
 
 
@@ -72,12 +82,32 @@ def generate_summary(client, reviews):
             {"role": "user", "content": prompt},
         ]
     )
-    
-
     #Extract the generated summary from GPT's response
     summary = response.choices[0].message.content
 
-    print("Summary: ", summary)
+    return summary
+
+def fetch_review(place_id):
+    cursor.execute('SELECT * FROM review_summaries WHERE id = ?', (place_id,))
+    return cursor.fetchall()
+
+def get_summary(place_id):
+    review_array = fetch_review(place_id)
+
+    if len(review_array) > 0:
+        review = review_array[0]
+        summary = review[1]
+    else:
+        reviews = get_place_details(place_id).get('reviews', [])
+        summary = generate_summary(OpenAI(), reviews)
+        cursor.execute('INSERT INTO review_summaries (id, review_summary) VALUES (?, ?)', (place_id, summary))
+        conn.commit()
 
     return summary
-    
+
+def get_all_summaries(restaurants):
+    summaries = []
+    for restaurant in restaurants:
+        summaries.append(get_summary(restaurant['place_id']))
+
+    return summaries

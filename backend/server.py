@@ -17,7 +17,7 @@ Final Goal: Single endpoint that checks restaurants nearby, picks 5, returns inf
 
 from flask import Flask, jsonify, request
 from markupsafe import escape
-from util import get_nearby_restaurants, get_place_details, generate_summary, openai_api_key
+from util import get_nearby_restaurants, get_place_details, generate_summary, openai_api_key, get_summary
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -63,14 +63,11 @@ def find_restaurants():
         # Type of restaurant
         tag = request.args.get('tag')
 
-        print("google api call")
         #You can adjust the radius, keyword, and num_results as needed
         restaurants = get_nearby_restaurants(location,tag, radius=200, keyword='food', num_results=3) 
 
         #Initialize results list
         results = []
-
-        print("restaurants: ", restaurants)
 
         for restaurant in restaurants:
                 #Get place details 
@@ -81,7 +78,7 @@ def find_restaurants():
                 reviews = place_details.get('reviews', [])
 
                 #Generate the summary
-                summary = generate_summary(client, reviews)
+                summary = get_summary(restaurant_id)
 
 
                 #Append restaurant details to results
