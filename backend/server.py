@@ -17,9 +17,10 @@ Final Goal: Single endpoint that checks restaurants nearby, picks 5, returns inf
 
 from flask import Flask, jsonify, request
 from markupsafe import escape
-from util import get_nearby_restaurants, get_place_details, generate_summary, openai_api_key
+from util import get_nearby_restaurants, get_place_details, generate_summary, openai_api_key, get_summary, calculate_distance, get_photo_url
 from openai import OpenAI
 from dotenv import load_dotenv
+import requests
 
 api_key = "#######"
 base_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
@@ -63,14 +64,11 @@ def find_restaurants():
         # Type of restaurant
         tag = request.args.get('tag')
 
-        print("google api call")
         #You can adjust the radius, keyword, and num_results as needed
-        restaurants = get_nearby_restaurants(location,tag, radius=200, keyword='food', num_results=3) 
+        restaurants = get_nearby_restaurants(location,tag, radius=200, keyword='food', num_results=3)
 
         #Initialize results list
         results = []
-
-        print("restaurants: ", restaurants)
 
         for restaurant in restaurants:
                 #Get place details 
@@ -81,7 +79,7 @@ def find_restaurants():
                 reviews = place_details.get('reviews', [])
 
                 #Generate the summary
-                summary = generate_summary(client, reviews)
+                summary = get_summary(restaurant_id)
 
 
                 #Append restaurant details to results
@@ -95,6 +93,86 @@ def find_restaurants():
 
     except Exception as e:
          return jsonify({'error': str(e)}), 500
+     
+
+@app.route("/nearby_restaurants", methods=['GET'])
+def find_restaurants_nearby():
+    '''
+    Return resturans in your location.
+    query:
+        tag -- specify the kind of restaurant
+        lag -- graphic latitude 
+        lng -- graphic long
+    '''
+
+    try:
+
+        # print("extracting url params")
+        # lat = request.args.get('lat')
+        # lng = request.args.get('lon')
+        lat = "48.1363964"
+        lng = "11.5609501"
+
+
+        # Parse coordinates into location
+        location= '48.1363964,11.5609501'
+
+        # Type of restaurant
+        tag = request.args.get('tag')
+
+        #You can adjust the radius, keyword, and num_results as needed
+        restaurants = get_nearby_restaurants(location, tag, radius=200, keyword='food', num_results=10)
+
+        #Initialize results list
+        results = []
+
+        for restaurant in restaurants:
+                #Get place details 
+                restaurant_id = restaurant.get('place_id')
+                place_details = get_place_details(restaurant_id)
+                
+                # check if place details  has photos
+                if place_details.get('photos'):
+                    photo_ref = place_details["photos"][0]["photo_reference"]
+                    
+                    photo_url = get_photo_url(photo_ref)
+                    
+                else:
+                    photo_url= "https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg"
+                
+                distance = calculate_distance(
+                                float(lat),
+                                float(lng), 
+                                place_details.get('geometry').get('location').get('lat'),
+                                place_details.get('geometry').get('location').get('lng'))
+
+                #Append restaurant details to results
+                results.append({'name': place_details.get('name'),
+                                'rating': place_details.get('rating'),
+                                'id': restaurant_id, 
+                                'address': place_details.get('formatted_address',),
+                                'total_ratings': place_details.get('user_ratings_total',),
+                                'distance': distance, 
+                                'image_url': photo_url})
+            
+        # Return results as json
+        return jsonify({'results': results})
+
+
+    except Exception as e:
+         return jsonify({'error': str(e)}), 500
+
+
+@app.route("/summary/<restaurant_id>")
+def get_summary_for_restaurant(restaurant_id):
+    '''
+    Returns a summary of the reviews for a restaurant
+    '''
+
+    #Generate the summary
+    summary = get_summary(restaurant_id)
+
+    return jsonify({'summary': summary})
 
 
 
