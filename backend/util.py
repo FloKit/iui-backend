@@ -37,10 +37,13 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
         }
         response = requests.get(base_url+'nearbysearch/json', params=params)
     else:
+        query = tag.replace(',', ' or ')
+        query = query + ' restaurant'
+
         params = {
             'location': location,
             'radius': radius,
-            'query': tag,
+            'query': query,
             'key': google_api_key
         } 
         response = requests.get(base_url+'textsearch/json', params=params)
@@ -49,7 +52,7 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
 
     # Limit the number of results to the top 'num_results'
     results = results[:num_results]
-
+  
     return results
 
 
