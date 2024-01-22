@@ -52,9 +52,7 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
 
     # Limit the number of results to the top 'num_results'
     results = results[:num_results]
-
-    print(results)
-
+    
     return results
 
 
