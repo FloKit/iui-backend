@@ -55,7 +55,7 @@ def find_restaurants():
 
         print("extracting url params")
         lat = request.args.get('lat')
-        lng = request.args.get('lon')
+        lng = request.args.get('lng')
 
 
         # Parse coordinates into location
@@ -108,14 +108,19 @@ def find_restaurants_nearby():
     try:
 
         # print("extracting url params")
-        # lat = request.args.get('lat')
-        # lng = request.args.get('lon')
-        lat = "48.1363964"
-        lng = "11.5609501"
+        lat = request.args.get('lat')
+        lng = request.args.get('lng')
+        
+        print("lat: ", lat)
+        print("lng: ", lng)
+        
+        # lat = "48.1363964"
+        # lng = "11.5609501"
 
 
         # Parse coordinates into location
-        location= '48.1363964,11.5609501'
+        # location= '48.1363964,11.5609501'
+        location= f'{lat},{lng}'
 
         # Type of restaurant
         tag = request.args.get('tag')
