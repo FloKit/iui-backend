@@ -20,9 +20,10 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
 
 
 #get nearby restaurants
-def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_results=5):
+def get_nearby_restaurants(location,tag, radius=1500, keyword='restaurant', num_results=5):
     '''
     Returns the restaurants from the API call based on location, radius
+    Radius is not used since we sort by distance
     @
     '''
     base_url = 'https://maps.googleapis.com/maps/api/place/'
@@ -31,9 +32,10 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
     if not tag :
         params = {
             'location': location,
-            'radius': radius,
+            # 'radius': radius,
             'keyword': keyword,
-            'key': google_api_key
+            'key': google_api_key,
+            'rankby': 'distance'
         }
         response = requests.get(base_url+'nearbysearch/json', params=params)
     else:
@@ -44,7 +46,7 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
             'location': location,
             'radius': radius,
             'query': query,
-            'key': google_api_key
+            'key': google_api_key,
         } 
         response = requests.get(base_url+'textsearch/json', params=params)
 
