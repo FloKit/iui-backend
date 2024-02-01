@@ -104,6 +104,7 @@ def get_summary(place_id):
     else:
         reviews = get_place_details(place_id).get('reviews', [])
         summary = generate_summary(OpenAI(), reviews)
+        cursor.execute('DELETE FROM review_summaries WHERE id = ?', (place_id,))
         cursor.execute('INSERT INTO review_summaries (id, review_summary) VALUES (?, ?)', (place_id, summary))
         conn.commit()
 
