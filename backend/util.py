@@ -83,7 +83,8 @@ def generate_summary(client, reviews):
     review_text = "\n".join(review.get('text', '') for review in reviews)
 
     #Define the prompt for GPT
-    prompt = f"Summarize the reviews for this place, please do not use more than 2-3 sentences: \n{review_text}"
+    # prompt = f"Summarize the reviews for this place, please do not use more than 2-3 sentences: \n{review_text}"
+    prompt = f"Please give me a summary of the reviews of this restaurant. I want one single summary for all 5 reviews. Please limit the summary to a maximum of 400 characters. It is extremely important that you limit the summary to a maximum of 400 characters: \n{review_text}"
 
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
