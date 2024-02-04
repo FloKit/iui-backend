@@ -20,7 +20,7 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
 
 
 #get nearby restaurants
-def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_results=5):
+def get_nearby_restaurants(location, radius=1000, keyword='restaurant', num_results=10, tag=None, page=1):
     '''
     Returns the restaurants from the API call based on location, radius
     @
@@ -31,9 +31,10 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
     if not tag :
         params = {
             'location': location,
-            'radius': radius,
+            # 'radius': radius,
             'keyword': keyword,
-            'key': google_api_key
+            'key': google_api_key,
+            'rankby': 'distance'
         }
         response = requests.get(base_url+'nearbysearch/json', params=params)
     else:
@@ -50,8 +51,12 @@ def get_nearby_restaurants(location,tag, radius=500, keyword='restaurant', num_r
 
     results = response.json().get('results', [])
 
+    #Basic pagination
+    page_results = num_results*page
+    previous_page = num_results*(page-1)
+
     # Limit the number of results to the top 'num_results'
-    results = results[:num_results]
+    results = results[previous_page:page_results]
   
     return results
 

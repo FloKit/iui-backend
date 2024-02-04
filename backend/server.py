@@ -37,64 +37,6 @@ def root():
         'description': 'This API give you the results of the best restaurants in your location.'
     })
 
-
-@app.route("/find", methods=['GET'])
-def find_restaurants():
-    '''
-    Return resturans in your location.
-    query:
-        tag -- specify the kind of restaurant
-        lag -- graphic latitude 
-        lng -- graphic long
-    '''
-
-    print("calling endpoint")
-    client = OpenAI(api_key=openai_api_key)
-
-    try:
-
-        print("extracting url params")
-        lat = request.args.get('lat')
-        lng = request.args.get('lng')
-
-
-        # Parse coordinates into location
-        location= '48.1363964,11.5609501'
-
-        # Type of restaurant
-        tag = request.args.get('tag')
-
-        #You can adjust the radius, keyword, and num_results as needed
-        restaurants = get_nearby_restaurants(location,tag, radius=200, keyword='food', num_results=3)
-
-        #Initialize results list
-        results = []
-
-        for restaurant in restaurants:
-                #Get place details 
-                restaurant_id = restaurant.get('place_id')
-                place_details = get_place_details(restaurant_id)
-
-                #Get reviews for the place
-                reviews = place_details.get('reviews', [])
-
-                #Generate the summary
-                summary = get_summary(restaurant_id)
-
-
-                #Append restaurant details to results
-                results.append({'name': place_details.get('name'),
-                                'rating': place_details.get('rating'),
-                                'summary': summary})
-            
-        # Return results as json
-        return jsonify({'results': results})
-
-
-    except Exception as e:
-         return jsonify({'error': str(e)}), 500
-     
-
 @app.route("/nearby_restaurants", methods=['GET'])
 def find_restaurants_nearby():
     '''
@@ -123,10 +65,13 @@ def find_restaurants_nearby():
         location= f'{lat},{lng}'
 
         # Type of restaurant
-        tag = request.args.get('tag')
+        tag = request.args.get('tag', None)
+
+        #Get page
+        page = int(request.args.get('page', '1'))
 
         #You can adjust the radius, keyword, and num_results as needed
-        restaurants = get_nearby_restaurants(location, tag, radius=200, keyword='food', num_results=10)
+        restaurants = get_nearby_restaurants(location=location, radius=1000, keyword='food', num_results=10, tag=tag, page=page)
 
         #Initialize results list
         results = []
