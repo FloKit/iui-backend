@@ -1,32 +1,35 @@
 # iui-backend
 
 ## Set up the environment
-1. Install [Poetry](https://python-poetry.org/docs/#installation)
-2. Set up the environment:
+
+Before starting the backend, ensure you have installed the necessary dependencies. You can do this by running the following command:
+
 ```bash
-make env 
+pip install -r requirements.txt
 ```
 
-## Set up jupyter kernel within poetry
-```bash
-poetry run python -m ipykernel install --user --name pyiui_backend
+After installation, create a `.env` file at the root of this repository and populate it as follows:
+
+```
+GOOGLE_API_KEY=<YOUR_GOOGLE_API_KEY>
+OPENAI_API_KEY=<YOUR_OPEN_AI_KEY>
 ```
 
-## Start environment and start server
+## Starting the backend
+
+To initiate the backend, navigate to the root of this project and execute the following command:
+
 ```bash
-poetry shell
-```
-```bash
-python server.py
+python backend/server.py
 ```
 
-## Install dependencies
-To install all dependencies for this project, run:
-```bash
-poetry install
-```
+The backend will now be running on your localhost, accessible via port 5000.
 
-To install a new package, run:
-```bash
-poetry add <package-name>
-```
+To test the backend, visit the following URL: [http://127.0.0.1:5000/nearby_restaurants?lat=48.1363964&lng=11.5609501](http://127.0.0.1:5000/nearby_restaurants?lat=48.1363964&lng=11.5609501).
+Simply modify the latitude and longitude parameters to scrape restaurants in different locations.
+
+## Frontend
+
+This backend serves as the supporting infrastructure for our `RestaurantFAInder` app, which can be found at: [https://github.com/FloKit/iui-frontend](https://github.com/FloKit/iui-frontend).
+
+Make sure to clone the frontend repository and follow the instructions provided there for setup.
