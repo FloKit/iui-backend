@@ -1,4 +1,4 @@
-# iui-backend
+# RestaurantFAInder Backend
 
 ## Set up the environment
 
