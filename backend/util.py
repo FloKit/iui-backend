@@ -9,15 +9,6 @@ from math import radians, sin, cos, sqrt, atan2
 google_api_key = os.environ.get("GOOGLE_API_KEY")
 openai_api_key = os.environ.get("OPENAI_API_KEY")
 
-conn = sqlite3.connect('reviews.db', check_same_thread=False)
-cursor = conn.cursor()
-
-cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
-    id TEXT PRIMARY KEY,
-    review_summary TEXT,
-    date DATETIME DEFAULT CURRENT_TIMESTAMP
-)''')
-
 
 #get nearby restaurants
 def get_nearby_restaurants(location, radius=1000, keyword='restaurant', num_results=10, tag=None, page=1):
@@ -38,8 +29,7 @@ def get_nearby_restaurants(location, radius=1000, keyword='restaurant', num_resu
         }
         response = requests.get(base_url+'nearbysearch/json', params=params)
     else:
-        query = tag.replace(',', ' or ')
-        query = query + ' restaurant'
+        query = tag.replace(',', ' restaurant or ')
 
         params = {
             'location': location,
@@ -98,8 +88,19 @@ def generate_summary(client, reviews):
     return summary
 
 def fetch_review(place_id):
+    conn = sqlite3.connect('reviews.db', check_same_thread=False)
+    cursor = conn.cursor()
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
+        id TEXT PRIMARY KEY,
+        review_summary TEXT,
+        date DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
     cursor.execute('SELECT * FROM review_summaries WHERE id = ?', (place_id,))
-    return cursor.fetchall()
+    res = cursor.fetchall()
+    cursor.close()
+
+    return res
 
 def get_summary(place_id):
     review_array = fetch_review(place_id)
@@ -110,11 +111,27 @@ def get_summary(place_id):
     else:
         reviews = get_place_details(place_id).get('reviews', [])
         summary = generate_summary(OpenAI(), reviews)
-        cursor.execute('DELETE FROM review_summaries WHERE id = ?', (place_id,))
-        cursor.execute('INSERT INTO review_summaries (id, review_summary) VALUES (?, ?)', (place_id, summary))
-        conn.commit()
+        try:
+            conn = sqlite3.connect('reviews.db', check_same_thread=False)
+            cursor = conn.cursor()
 
+            cursor.execute('''CREATE TABLE IF NOT EXISTS review_summaries (
+                id TEXT PRIMARY KEY,
+                review_summary TEXT,
+                date DATETIME DEFAULT CURRENT_TIMESTAMP
+            )''')
+            cursor.execute('DELETE FROM review_summaries WHERE id = ?', (place_id,))
+            cursor.execute('INSERT INTO review_summaries (id, review_summary) VALUES (?, ?)', (place_id, summary))
+            conn.commit()
+        except sqlite3.ProgrammingError as e:
+            print(e)
+            print("this is the summary: ", summary)
+            return summary
+        finally:
+            cursor.close()
+        
     return summary
+
 
 def get_all_summaries(restaurants):
     summaries = []
